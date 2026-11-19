@@ -1,0 +1,24 @@
+# Weather taxonomy of the ASAM OpenODD YAML examples (condensed).
+TAXONOMY:
+  environmental_conditions:
+    weather:
+      rainfall_rate: float precipitation_rate
+      rain_level:
+        no_rain: {rainfall_rate: "[0 .. 0.1] mm/h"}
+        light_rain: {rainfall_rate: "[0.1 .. 2.5] mm/h"}
+        moderate_rain: {rainfall_rate: "[2.5 .. 7.6] mm/h"}
+        heavy_rain: {rainfall_rate: "[7.6 .. 15] mm/h"}
+      road_state: [dry, wet, icy, snowy]
+    time_of_day:
+      is_night: boolean
+    wind:
+      wind_speed: float velocity
+      wind_trajectory: radial_vector
+  ego_vehicle:
+    ego_width: float length
+  obstacle:
+    lateral_distance: float length
+    type: [car, truck, pedestrian, cyclist, motorcycle]
+  radial_vector:
+    angle: float angle
+    speed: float velocity

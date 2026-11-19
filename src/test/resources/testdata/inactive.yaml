@@ -1,0 +1,17 @@
+TAXONOMY:
+  a:
+    x: boolean
+MODULES:
+  inactive_mod:
+    ACTIVE: false
+    INCLUDE_AND:
+      x: true
+  meta_only:
+    TITLE: Only metadata
+ODD:
+  root_mod:
+    INCLUDE_AND:
+      inactive_mod: true
+  negated_root:
+    INCLUDE_AND:
+      inactive_mod: false

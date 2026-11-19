@@ -1,0 +1,15 @@
+# Minimal single-file ODD: automated driving in a city during the day.
+# Shows boolean conditions, categorical lists and numeric ranges with units.
+TAXONOMY:
+  environment:
+    is_night: boolean
+    road_state: [dry, wet, icy, snowy]
+  ego_vehicle:
+    speed: float velocity
+ODD:
+  city_daytime:
+    TITLE: City driving during the day
+    INCLUDE_AND:
+      is_night: false
+      road_state: [dry, wet]
+      speed: "[0 .. 50] km/h"

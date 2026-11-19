@@ -1,0 +1,10 @@
+IMPORT: taxonomy.yaml
+MODULES:
+  night_module:
+    TITLE: Night driving
+    INCLUDE_AND:
+      is_night: true
+  clearance_module:
+    LABELS: [odd_weather]
+    INCLUDE_AND:
+      lateral_distance: "> 0.5*ego_width"

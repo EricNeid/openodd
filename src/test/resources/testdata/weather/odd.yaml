@@ -1,0 +1,21 @@
+IMPORT: [modules.yaml]
+ODD:
+  example_module_1:
+    TITLE: Example module 1
+    LABELS: [odd_weather]
+    INCLUDE_AND:
+      rain_level: <= moderate_rain
+      is_night: false
+    EXCLUDE_AND:
+      OR:
+        road_state: [icy, snowy]
+        wind_speed: "> 25 m/s"
+  example_module_2:
+    TITLE: Example module 2
+    INCLUDE_OR:
+      rain_level: [heavy_rain]
+      clearance_module: true
+MODULES:
+  weather_watcher:
+    INCLUDE_AND:
+      odd_weather: true

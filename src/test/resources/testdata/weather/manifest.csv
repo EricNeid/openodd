@@ -1,0 +1,4 @@
+FIELD_ID,FILE_NAME,TYPE,COLUMN,TAXONOMY_ID,UNIT,COMMENT
+1,taxonomy.yaml,taxonomy,,,,
+2,cod.csv,cod,rainfall_rate,environmental_conditions.weather.rainfall_rate,mm/h,Rainfall rate
+3,cod.csv,cod,wind_speed,environmental_conditions.weather.wind.wind_speed,km/h,Wind speed

@@ -1,0 +1,21 @@
+# Composed ODD for automated parking, built from a helper module.
+# Shows MODULES, module references and parameterized conditions.
+TAXONOMY:
+  environment:
+    road_state: [dry, wet, icy, snowy]
+  ego_vehicle:
+    speed: float velocity
+    $min_lateral_distance: float length
+    lateral_distance: float length
+ODD:
+  parking:
+    TITLE: Automated parking
+    INCLUDE_AND:
+      cautious_driving: true
+      lateral_distance: "> 0.5*min_lateral_distance"
+MODULES:
+  cautious_driving:
+    TITLE: Slow on intact surfaces
+    INCLUDE_AND:
+      speed: "< 10 km/h"
+      road_state: [dry, wet]

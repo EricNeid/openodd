@@ -1,0 +1,4 @@
+TEMPORAL_EXTENT,SPATIAL_EXTENT,rainfall_rate;mm/h,rain_level,wind_speed;km/h,is_night,road_state,ego_width;m,lateral_distance;m
+2024-03-01T10:00:00,zone_a,5,moderate_rain,36,false,wet,2,1.5
+2024-03-01T11:00:00,zone_a,10,heavy_rain,95,true,icy,2,2.5
+2024-03-01T12:00:00,zone_b,unknown,unknown,20,false,dry,2,0.8

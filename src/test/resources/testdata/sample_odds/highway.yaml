@@ -1,0 +1,25 @@
+# Highway ODD with derived categorical literals and an EXCLUDE section.
+# The rain_level literals are ordered by their rainfall_rate constraints,
+# so bound expressions such as "<= moderate_rain" apply to them.
+TAXONOMY:
+  environment:
+    rainfall_rate: float precipitation_rate
+    rain_level:
+      no_rain: {rainfall_rate: "[0 .. 0.1] mm/h"}
+      light_rain: {rainfall_rate: "[0.1 .. 2.5] mm/h"}
+      moderate_rain: {rainfall_rate: "[2.5 .. 7.6] mm/h"}
+      heavy_rain: {rainfall_rate: "[7.6 .. 15] mm/h"}
+    road_state: [dry, wet, icy, snowy]
+  time_of_day:
+    is_night: boolean
+  ego_vehicle:
+    speed: float velocity
+ODD:
+  highway:
+    TITLE: Highway driving
+    INCLUDE_AND:
+      rain_level: <= moderate_rain
+      speed: "[80 .. 130] km/h"
+    EXCLUDE_OR:
+      is_night: true
+      road_state: [icy, snowy]
