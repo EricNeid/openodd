@@ -7,9 +7,13 @@ plugins {
 group = "io.github.ericneid"
 version = "0.1.0"
 
+// The Java version used to compile and run the build. CI raises this
+// through the toolchainJavaVersion property to test against newer JDKs.
+val toolchainJavaVersion = (findProperty("toolchainJavaVersion") as String?)?.toInt() ?: 21
+
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(toolchainJavaVersion)
     }
 }
 
@@ -36,8 +40,11 @@ tasks.test {
 
 signing {
     // Sign with the local GnuPG installation (gpg-agent handles the
-    // passphrase), instead of a secring file.
-    useGpgCmd()
+    // passphrase). CI skips this and injects the key through the
+    // plugin's in-memory signing properties instead.
+    if (!project.hasProperty("signingInMemoryKey")) {
+        useGpgCmd()
+    }
 }
 
 mavenPublishing {
