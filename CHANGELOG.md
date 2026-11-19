@@ -3,7 +3,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.1.0 (2026-11-19)
 * Initial release — complete 1:1 port of
   [go-openodd](https://github.com/EricNeid/go-openodd) to Java 21
 * Sources restructured into Java-idiomatic role packages (`model`,

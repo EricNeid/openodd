@@ -28,19 +28,15 @@ The library is not yet published to Maven Central. Build it from source:
 
 ```sh
 ./gradlew build
-# build/libs/openodd-0.1.0-SNAPSHOT.jar
+# build/libs/openodd-0.1.0.jar
 ```
 
-Once published, the coordinates will be:
+The library is published to Maven Central:
 
 ```kotlin
 dependencies {
     implementation("io.github.ericneid:openodd:0.1.0")
 }
-```
-
-```java
-var model = Loader.loadFile("testdata/sample_odds/highway.yaml").toString();
 ```
 
 ## Usage
