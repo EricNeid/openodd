@@ -24,19 +24,19 @@ Java 21 or later.
 
 ## Quickstart
 
-The library is not yet published to Maven Central. Build it from source:
-
-```sh
-./gradlew build
-# build/libs/openodd-0.1.0.jar
-```
-
-The library is published to Maven Central:
+Get library from Maven Central:
 
 ```kotlin
 dependencies {
     implementation("io.github.ericneid:openodd:0.1.0")
 }
+```
+
+To build from source:
+
+```sh
+./gradlew build
+# build/libs/openodd-0.1.0.jar
 ```
 
 ## Usage
@@ -190,10 +190,7 @@ self-contained example ODDs: a minimal daytime city ODD, one with EXCLUDE
 sections and derived literals, and one composed from helper modules and a
 parameter.
 
-## Continuous integration and releases
-
-GitHub Actions build and test every push and pull request against
-Java 21 and 25 (`.github/workflows/ci.yml`).
+## New releases
 
 A release is cut by pushing a `v*` tag that matches the `version` in
 `build.gradle.kts` (`.github/workflows/release.yml`): the workflow
@@ -207,6 +204,13 @@ creates a GitHub release. It requires these repository secrets:
 | `GPG_PRIVATE_KEY` | ASCII-armored signing key, `gpg --export-secret-keys --armor <key id>` |
 | `GPG_KEY_ID` | The signing key id |
 | `GPG_PASSPHRASE` | Passphrase of the signing key |
+
+Manuell publish release candiates to Maven Central:
+
+```sh
+./gradlew publishToMavenLocal 
+./gradlew publishAndReleaseToMavenCentral
+```
 
 ## Acknowledgement
 
