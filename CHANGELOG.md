@@ -3,7 +3,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.2.0 - 2026-11-20
 
 * Added three-valued classification: `OddVerdict` with `Evaluator.classify`,
   `classifyRoots` and `classifyCod`. Conditions over values the record does
