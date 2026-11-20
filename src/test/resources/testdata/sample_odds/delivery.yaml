@@ -1,0 +1,21 @@
+# Delivery ODD for urban last-mile driving, evaluated against OD rows
+# that may lack values. Shows the three-valued verdicts: rows without a
+# road width or time of day are UNKNOWN, not outside.
+TAXONOMY:
+  environment:
+    road_state: [dry, wet, icy, snowy]
+  time_of_day:
+    is_night: boolean
+  infrastructure:
+    road_width: float length
+  ego_vehicle:
+    speed: float velocity
+ODD:
+  delivery:
+    TITLE: Urban last-mile delivery
+    INCLUDE_AND:
+      road_state: [dry, wet]
+      road_width: "[3.5 .. 5] m"
+      speed: "< 30 km/h"
+    EXCLUDE_OR:
+      is_night: true

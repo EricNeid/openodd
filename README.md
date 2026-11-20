@@ -79,6 +79,12 @@ var results = ev.evaluateRoots(rec); // Map<String, Boolean>
 
 // The whole ODD: true when every root module matches.
 var insideOdd = ev.insideOdd(rec);
+
+// Three-valued classification: conditions over values the record does
+// not carry evaluate to UNKNOWN instead of false (Kleene logic).
+var verdict = ev.classify(rec, "example_module_1"); // OddVerdict
+var verdicts = ev.classifyRoots(rec);               // Map<String, OddVerdict>
+var overall = ev.classify(rec);                     // INSIDE, OUTSIDE or UNKNOWN
 ```
 
 Records are maps of concept values. Keys may be full concept IDs
@@ -98,7 +104,8 @@ var idx = new ConceptIndex(m.taxonomy);
 var cod = OpenOdd.parseCODCSV(new FileReader("cod.csv")); // CSV with "NAME;unit" headers
 cod.resolve(idx);
 
-var results = ev.evaluateCod(cod); // one Map<String, Boolean> per row
+var results = ev.evaluateCod(cod);  // one Map<String, Boolean> per row
+var verdicts = ev.classifyCod(cod); // one Map<String, OddVerdict> per row
 ```
 
 With a manifest (Section 8.3.4 of the standard), column names and units are
@@ -142,6 +149,15 @@ room for interpretation, this package uses the following rules:
   default: an expression is true if it holds for at least one possible
   point. `EvalOptions.of(UncertaintyMode.CERTAINTY)` requires it to hold for
   all possible points.
+- **Missing values** — a condition over a concept for which the record
+  carries no value evaluates to UNKNOWN, not false; verdicts combine under
+  Kleene logic (`NOT unknown = unknown`), including the negated EXCLUDE
+  conditions. A record is INSIDE only when every condition is provably
+  true. The boolean API (`evaluate`, `evaluateRoots`, `insideOdd`,
+  `evaluateCod`) collapses UNKNOWN to false; `classify`, `classifyRoots` and
+  `classifyCod` return the three-valued `OddVerdict`. Uncertain *values*
+  (see above) stay a separate concern: they are resolved by the uncertainty
+  mode, not reported as UNKNOWN.
 - **Units** follow the ASAM Unit Handling Guide: a value `v` in unit `u`
   converts to the base unit as `(v − offset) / factor`. The built-in
   registry covers the unit types of the standard (length, velocity,

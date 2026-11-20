@@ -39,16 +39,66 @@ import java.util.function.Predicate;
 /**
  * Decides whether COD/OD records lie inside or outside the ODD modules of
  * a model. Evaluators are safe for concurrent use.
+ *
+ * <p>Conditions over concepts for which the record carries no value are
+ * evaluated with Kleene three-valued logic: {@link #classify(Record,
+ * String)} reports them as {@link OddVerdict#UNKNOWN} while the boolean
+ * evaluation API collapses them to false.
  */
 public final class Evaluator {
 
 	/**
 	 * Reports that a term references a concept for which the record
-	 * carries no value; the enclosing condition evaluates to false.
+	 * carries no value; the enclosing condition evaluates to UNKNOWN.
 	 */
 	static final class MissingFactorException extends OpenOddException {
 		MissingFactorException() {
 			super("record has no value for a term factor");
+		}
+	}
+
+	/**
+	 * Kleene three-valued logic: AND, OR and NOT propagate UNKNOWN
+	 * instead of collapsing it, so that missing record values stay
+	 * distinguishable from violated conditions.
+	 */
+	private enum Kleene {
+		TRUE, FALSE, UNKNOWN;
+
+		/** Wraps a plain boolean. */
+		static Kleene of(boolean b) {
+			return b ? TRUE : FALSE;
+		}
+
+		/** Truth-table AND: false dominates, unknown survives. */
+		Kleene and(Kleene other) {
+			if (this == FALSE || other == FALSE) {
+				return FALSE;
+			}
+			if (this == UNKNOWN || other == UNKNOWN) {
+				return UNKNOWN;
+			}
+			return TRUE;
+		}
+
+		/** Truth-table OR: true dominates, unknown survives. */
+		Kleene or(Kleene other) {
+			if (this == TRUE || other == TRUE) {
+				return TRUE;
+			}
+			if (this == UNKNOWN || other == UNKNOWN) {
+				return UNKNOWN;
+			}
+			return FALSE;
+		}
+
+		/** Truth-table NOT. */
+		Kleene not() {
+			return switch (this) {
+				case TRUE -> FALSE;
+				case FALSE -> TRUE;
+				case UNKNOWN -> UNKNOWN;
+			};
 		}
 	}
 
@@ -68,29 +118,54 @@ public final class Evaluator {
 	/**
 	 * Evaluates one module for a record. Record keys are canonicalized
 	 * against the taxonomy first, so both full concept IDs and
-	 * unambiguous short references work as keys.
+	 * unambiguous short references work as keys. An UNKNOWN verdict
+	 * collapses to false; use {@link #classify(Record, String)} to keep
+	 * the three-valued verdict.
 	 */
 	public boolean evaluate(Record rec, String moduleId) {
+		return classify(rec, moduleId).toBoolean();
+	}
+
+	/**
+	 * Classifies one module for a record. Record keys are canonicalized
+	 * against the taxonomy first, so both full concept IDs and
+	 * unambiguous short references work as keys.
+	 */
+	public OddVerdict classify(Record rec, String moduleId) {
 		var mod = model.modules.get(moduleId);
 		if (mod == null) {
 			throw new OpenOddException("unknown module \"%s\"".formatted(moduleId));
 		}
-		return module(newContext(rec), mod);
+		return verdict(module(newContext(rec), mod));
 	}
 
 	/**
 	 * Evaluates every root module for a record. The result maps root
-	 * module IDs to their truth values.
+	 * module IDs to their truth values, with UNKNOWN collapsed to false;
+	 * use {@link #classifyRoots(Record)} to keep the three-valued
+	 * verdicts.
 	 */
 	public Map<String, Boolean> evaluateRoots(Record rec) {
-		var ctx = newContext(rec);
 		var out = new LinkedHashMap<String, Boolean>();
+		for (var e : classifyRoots(rec).entrySet()) {
+			out.put(e.getKey(), e.getValue().toBoolean());
+		}
+		return out;
+	}
+
+	/**
+	 * Classifies every root module for a record. The result maps root
+	 * module IDs to their three-valued verdicts.
+	 */
+	public Map<String, OddVerdict> classifyRoots(Record rec) {
+		var ctx = newContext(rec);
+		var out = new LinkedHashMap<String, OddVerdict>();
 		for (var id : model.rootIds) {
 			var mod = model.modules.get(id);
 			if (mod == null) {
 				continue;
 			}
-			out.put(id, module(ctx, mod));
+			out.put(id, verdict(module(ctx, mod)));
 		}
 		return out;
 	}
@@ -105,28 +180,53 @@ public final class Evaluator {
 
 	/**
 	 * Reports whether a record lies inside the ODD: all root modules
-	 * evaluate to true. Use {@link #evaluateRoots(Record)} for per-root
-	 * results.
+	 * evaluate to true. A record with an UNKNOWN verdict is not inside;
+	 * use {@link #classify(Record)} to keep the three-valued verdict.
 	 */
 	public boolean insideOdd(Record rec) {
-		var roots = evaluateRoots(rec);
-		for (var v : roots.values()) {
-			if (!v) {
-				return false;
-			}
+		return classify(rec).toBoolean();
+	}
+
+	/**
+	 * Classifies a record against the whole ODD: INSIDE when every root
+	 * module is true, OUTSIDE when any root module is false, UNKNOWN
+	 * when no root module is false but at least one cannot be judged.
+	 */
+	public OddVerdict classify(Record rec) {
+		var result = Kleene.TRUE;
+		for (var v : classifyRoots(rec).values()) {
+			result = result.and(kleene(v));
 		}
-		return true;
+		return verdict(result);
 	}
 
 	/**
 	 * Evaluates all root modules for every record of a table. The result
-	 * is aligned with {@code cod.records}.
+	 * is aligned with {@code cod.records}, with UNKNOWN collapsed to
+	 * false; use {@link #classifyCod(Cod)} to keep the three-valued
+	 * verdicts.
 	 */
 	public List<Map<String, Boolean>> evaluateCod(Cod cod) {
 		var results = new ArrayList<Map<String, Boolean>>(cod.records.size());
+		for (var row : classifyCod(cod)) {
+			var collapsed = new LinkedHashMap<String, Boolean>();
+			for (var e : row.entrySet()) {
+				collapsed.put(e.getKey(), e.getValue().toBoolean());
+			}
+			results.add(collapsed);
+		}
+		return results;
+	}
+
+	/**
+	 * Classifies all root modules for every record of a table. The
+	 * result is aligned with {@code cod.records}.
+	 */
+	public List<Map<String, OddVerdict>> classifyCod(Cod cod) {
+		var results = new ArrayList<Map<String, OddVerdict>>(cod.records.size());
 		for (var i = 0; i < cod.records.size(); i++) {
 			try {
-				results.add(evaluateRoots(cod.records.get(i)));
+				results.add(classifyRoots(cod.records.get(i)));
 			} catch (OpenOddException e) {
 				throw new OpenOddException("record %d: %s".formatted(i + 1, e.getMessage()), e);
 			}
@@ -134,10 +234,28 @@ public final class Evaluator {
 		return results;
 	}
 
+	/** Maps a truth value to its verdict. */
+	private static OddVerdict verdict(Kleene k) {
+		return switch (k) {
+			case TRUE -> OddVerdict.INSIDE;
+			case FALSE -> OddVerdict.OUTSIDE;
+			case UNKNOWN -> OddVerdict.UNKNOWN;
+		};
+	}
+
+	/** Maps a verdict back to its truth value. */
+	private static Kleene kleene(OddVerdict v) {
+		return switch (v) {
+			case INSIDE -> Kleene.TRUE;
+			case OUTSIDE -> Kleene.FALSE;
+			case UNKNOWN -> Kleene.UNKNOWN;
+		};
+	}
+
 	/** Carries per-record evaluation state. */
 	private static final class EvalCtx {
 		final Record rec;
-		final Map<String, Boolean> cache = new HashMap<>();
+		final Map<String, Kleene> cache = new HashMap<>();
 		final Map<String, Boolean> busy = new HashMap<>();
 
 		EvalCtx(Record rec) {
@@ -149,7 +267,7 @@ public final class Evaluator {
 	 * Evaluates a module: INCLUDE AND (NOT EXCLUDE), with the missing
 	 * section rules of Section 6.4.3.4 of the standard.
 	 */
-	private boolean module(EvalCtx ctx, Module mod) {
+	private Kleene module(EvalCtx ctx, Module mod) {
 		var cached = ctx.cache.get(mod.id);
 		if (cached != null) {
 			return cached;
@@ -157,15 +275,15 @@ public final class Evaluator {
 		if (!mod.active) {
 			// Inactive modules are ignored; conditions referring to them
 			// or their negation are automatically satisfied.
-			ctx.cache.put(mod.id, true);
-			return true;
+			ctx.cache.put(mod.id, Kleene.TRUE);
+			return Kleene.TRUE;
 		}
 		if (ctx.busy.get(mod.id) != null) {
 			throw new OpenOddException("cyclic module reference through \"%s\"".formatted(mod.id));
 		}
 		ctx.busy.put(mod.id, true);
 		try {
-			var include = true;
+			var include = Kleene.TRUE;
 			if (mod.include != null) {
 				try {
 					include = section(ctx, mod.include);
@@ -173,15 +291,16 @@ public final class Evaluator {
 					throw new OpenOddException("module \"%s\" INCLUDE: %s".formatted(mod.id, e.getMessage()), e);
 				}
 			}
-			var exclude = false;
-			if (mod.exclude != null) {
+			var result = include;
+			// A false INCLUDE decides the module on its own, mirroring
+			// the short-circuit of the boolean pipeline.
+			if (mod.exclude != null && result != Kleene.FALSE) {
 				try {
-					exclude = section(ctx, mod.exclude);
+					result = result.and(section(ctx, mod.exclude).not());
 				} catch (OpenOddException e) {
 					throw new OpenOddException("module \"%s\" EXCLUDE: %s".formatted(mod.id, e.getMessage()), e);
 				}
 			}
-			var result = include && !exclude;
 			ctx.cache.put(mod.id, result);
 			return result;
 		} finally {
@@ -193,32 +312,27 @@ public final class Evaluator {
 	 * Evaluates a section: the AND or OR over its conditions and
 	 * subsections.
 	 */
-	private boolean section(EvalCtx ctx, Section sec) {
-		var result = sec.operator == SectionOperator.AND;
+	private Kleene section(EvalCtx ctx, Section sec) {
+		var result = sec.operator == SectionOperator.AND ? Kleene.TRUE : Kleene.FALSE;
 		for (var cond : sec.conditions) {
-			var v = condition(ctx, cond);
-			if (sec.operator == SectionOperator.AND) {
-				result = result && v;
-			} else {
-				result = result || v;
-			}
+			result = combine(sec.operator, result, condition(ctx, cond));
 		}
 		for (var sub : sec.subsections) {
-			var v = section(ctx, sub);
-			if (sec.operator == SectionOperator.AND) {
-				result = result && v;
-			} else {
-				result = result || v;
-			}
+			result = combine(sec.operator, result, section(ctx, sub));
 		}
 		return result;
+	}
+
+	/** Folds one operand into a section result. */
+	private static Kleene combine(SectionOperator op, Kleene result, Kleene v) {
+		return op == SectionOperator.AND ? result.and(v) : result.or(v);
 	}
 
 	/**
 	 * Evaluates a single condition by resolving its reference to a
 	 * module, label or taxonomy concept.
 	 */
-	private boolean condition(EvalCtx ctx, Condition cond) {
+	private Kleene condition(EvalCtx ctx, Condition cond) {
 		// Modules take precedence over concepts; the standard requires the
 		// ID spaces to be disjoint, so a clash is a validation error.
 		var mod = model.modules.get(cond.ref);
@@ -229,10 +343,9 @@ public final class Evaluator {
 						"condition \"%s\": module references take true or false".formatted(cond.ref));
 			}
 			if (!mod.active) {
-				return true;
+				return Kleene.TRUE;
 			}
-			var got = module(ctx, mod);
-			return got == want;
+			return compareOperand(module(ctx, mod), want);
 		}
 		if (model.labels.containsKey(cond.ref)) {
 			var want = boolOperand(cond);
@@ -240,8 +353,7 @@ public final class Evaluator {
 				throw new OpenOddException(
 						"condition \"%s\": label references take true or false".formatted(cond.ref));
 			}
-			var got = label(ctx, cond.ref);
-			return got == want;
+			return compareOperand(label(ctx, cond.ref), want);
 		}
 		Concept c;
 		try {
@@ -250,6 +362,14 @@ public final class Evaluator {
 			throw new OpenOddException("condition \"%s\": %s".formatted(cond.ref, e.getMessage()), e);
 		}
 		return expression(ctx, c, cond.expr);
+	}
+
+	/** Compares an operand's truth value against the wanted polarity. */
+	private static Kleene compareOperand(Kleene got, boolean want) {
+		if (got == Kleene.UNKNOWN) {
+			return Kleene.UNKNOWN;
+		}
+		return Kleene.of((got == Kleene.TRUE) == want);
 	}
 
 	/**
@@ -276,26 +396,28 @@ public final class Evaluator {
 	 * label without any active module satisfies every condition
 	 * referencing it, mirroring the inactive-module rule.
 	 */
-	private boolean label(EvalCtx ctx, String label) {
+	private Kleene label(EvalCtx ctx, String label) {
 		var anyActive = false;
+		var result = Kleene.FALSE;
 		for (var id : model.labels.get(label)) {
 			var mod = model.modules.get(id);
 			if (mod == null || !mod.active) {
 				continue;
 			}
 			anyActive = true;
-			if (module(ctx, mod)) {
-				return true;
+			result = result.or(module(ctx, mod));
+			if (result == Kleene.TRUE) {
+				return Kleene.TRUE;
 			}
 		}
-		return !anyActive;
+		return anyActive ? result : Kleene.TRUE;
 	}
 
 	/**
 	 * Evaluates a boolean expression over a concept against the record of
 	 * the current evaluation context.
 	 */
-	private boolean expression(EvalCtx ctx, Concept c, Expression expr) {
+	private Kleene expression(EvalCtx ctx, Concept c, Expression expr) {
 		if (expr instanceof EqualExpr ex) {
 			return equal(ctx, c, ex);
 		}
@@ -318,10 +440,10 @@ public final class Evaluator {
 	}
 
 	/** Evaluates Equal expressions. */
-	private boolean equal(EvalCtx ctx, Concept c, EqualExpr ex) {
+	private Kleene equal(EvalCtx ctx, Concept c, EqualExpr ex) {
 		switch (ex.kind()) {
 			case UNKNOWN:
-				return recordValue(ctx, c).isUnknown();
+				return Kleene.of(recordValue(ctx, c).isUnknown());
 			case BOOL:
 				return equalBool(ctx, c, ex.bool());
 			case NUMBER:
@@ -341,32 +463,36 @@ public final class Evaluator {
 									&& pv.kind() == ValueKind.NUMBER) {
 								return equalNumber(ctx, c, pv.num(), pv.unit());
 							}
-							// Missing or incompatible parameter value.
-							return false;
+							if (pv.kind() == ValueKind.MISSING) {
+								// The record carries no parameter value.
+								return Kleene.UNKNOWN;
+							}
+							// Incompatible parameter value.
+							return Kleene.FALSE;
 						}
 					} catch (OpenOddException ignored) {
 						// Unresolvable references are reported by the validator.
 					}
 				}
 				if (ex.str().equals("unknown")) {
-					return recordValue(ctx, c).isUnknown();
+					return Kleene.of(recordValue(ctx, c).isUnknown());
 				}
 				return equalCategorical(ctx, c, ex.str());
 		}
 	}
 
-	private boolean equalBool(EvalCtx ctx, Concept c, boolean want) {
+	private Kleene equalBool(EvalCtx ctx, Concept c, boolean want) {
 		var v = recordValue(ctx, c);
 		var wantStr = formatBool(want);
 		return switch (v.kind()) {
-			case BOOL -> v.bool() == want;
-			case CATEGORICAL -> v.str().equals(wantStr);
-			case LIST -> anyOf(v, item -> switch (item.kind()) {
+			case BOOL -> Kleene.of(v.bool() == want);
+			case CATEGORICAL -> Kleene.of(v.str().equals(wantStr));
+			case LIST -> Kleene.of(anyOf(v, item -> switch (item.kind()) {
 				case BOOL -> item.bool() == want;
 				case CATEGORICAL -> item.str().equals(wantStr);
 				default -> false;
-			});
-			case MISSING -> false;
+			}));
+			case MISSING -> Kleene.UNKNOWN;
 			default -> throw new OpenOddException(
 					"concept \"%s\": boolean comparison needs a boolean value, got %s".formatted(c.id, v.kind()));
 		};
@@ -376,53 +502,48 @@ public final class Evaluator {
 		return Boolean.toString(b);
 	}
 
-	private boolean equalNumber(EvalCtx ctx, Concept c, double want, String unit) {
+	private Kleene equalNumber(EvalCtx ctx, Concept c, double want, String unit) {
 		var v = recordValue(ctx, c);
 		return switch (v.kind()) {
 			case NUMBER -> {
 				var w = convertToConceptBase(c, want, unit);
 				var x = valueInConceptBase(c, v);
-				yield numEqual(x, w);
+				yield Kleene.of(numEqual(x, w));
 			}
 			case RANGE -> {
 				var w = convertToConceptBase(c, want, unit);
 				var conv = convertedRange(c, v);
-				yield compareInterval(CmpOp.NONE, conv.min(), conv.max(), w);
+				yield Kleene.of(compareInterval(CmpOp.NONE, conv.min(), conv.max(), w));
 			}
-			case LIST -> anyOf(v, item -> {
+			case LIST -> Kleene.of(anyOf(v, item -> {
 				if (item.kind() == ValueKind.NUMBER) {
 					var w = convertToConceptBase(c, want, unit);
 					var x = valueInConceptBase(c, item);
 					return numEqual(x, w);
 				}
 				return false;
-			});
-			case MISSING -> false;
+			}));
+			case MISSING -> Kleene.UNKNOWN;
 			default -> throw new OpenOddException(
 					"concept \"%s\": numeric equality needs a numeric value, got %s".formatted(c.id, v.kind()));
 		};
 	}
 
-	private boolean equalCategorical(EvalCtx ctx, Concept c, String want) {
+	private Kleene equalCategorical(EvalCtx ctx, Concept c, String want) {
 		var v = recordValue(ctx, c);
 		return switch (v.kind()) {
 			case CATEGORICAL -> {
 				if (v.str().equals(want)) {
-					yield true;
+					yield Kleene.TRUE;
 				}
 				// The record may carry a numeric value for the concept
 				// that defines the literal; derive the literal from the
 				// record.
 				yield derivedLiteralEquals(ctx, c, want);
 			}
-			case BOOL -> formatBool(v.bool()).equals(want);
-			case NUMBER -> {
-				// A numeric record value is matched against the defining
-				// constraints of the literal.
-				var lit = deriveLiteral(ctx, c);
-				yield lit.found() && lit.name().equals(want);
-			}
-			case LIST -> anyOf(v, item -> switch (item.kind()) {
+			case BOOL -> Kleene.of(formatBool(v.bool()).equals(want));
+			case NUMBER -> derivedLiteralMatches(ctx, c, want);
+			case LIST -> Kleene.of(anyOf(v, item -> switch (item.kind()) {
 				case CATEGORICAL -> item.str().equals(want);
 				case BOOL -> formatBool(item.bool()).equals(want);
 				case NUMBER -> {
@@ -430,24 +551,36 @@ public final class Evaluator {
 					yield lit.found() && lit.name().equals(want);
 				}
 				default -> false;
-			});
+			}));
 			case MISSING -> {
 				// The record may carry values for the concepts defining
 				// the literals; derive the literal from those constraints.
-				var lit = deriveLiteral(ctx, c);
-				yield lit.found() && lit.name().equals(want);
+				yield derivedLiteralMatches(ctx, c, want);
 			}
 			default -> throw new OpenOddException(
 					"concept \"%s\": literal comparison needs a categorical value, got %s".formatted(c.id, v.kind()));
 		};
 	}
 
+	/**
+	 * Derives the record's literal of a concept and compares it against
+	 * the wanted name; UNKNOWN when no literal can be derived.
+	 */
+	private Kleene derivedLiteralMatches(EvalCtx ctx, Concept c, String want) {
+		var lit = deriveLiteral(ctx, c);
+		if (!lit.found()) {
+			return Kleene.UNKNOWN;
+		}
+		return Kleene.of(lit.name().equals(want));
+	}
+
 	/** Checks the defining constraints of a literal against the record. */
-	private boolean derivedLiteralEquals(EvalCtx ctx, Concept c, String want) {
+	private Kleene derivedLiteralEquals(EvalCtx ctx, Concept c, String want) {
 		var lit = c.literal(want);
 		if (lit == null || lit.constraints.isEmpty()) {
-			return false;
+			return Kleene.FALSE;
 		}
+		var result = Kleene.TRUE;
 		for (var cons : lit.constraints) {
 			Concept cc;
 			try {
@@ -456,11 +589,15 @@ public final class Evaluator {
 				throw new OpenOddException(
 						"literal \"%s\" of \"%s\": %s".formatted(want, c.id, e.getMessage()), e);
 			}
-			if (!expression(ctx, cc, cons.expr())) {
-				return false;
+			var v = expression(ctx, cc, cons.expr());
+			if (v == Kleene.FALSE) {
+				return Kleene.FALSE;
+			}
+			if (v == Kleene.UNKNOWN) {
+				result = Kleene.UNKNOWN;
 			}
 		}
-		return true;
+		return result;
 	}
 
 	/** The result of {@link #deriveLiteral}. */
@@ -477,7 +614,7 @@ public final class Evaluator {
 			if (lit.constraints.isEmpty()) {
 				continue;
 			}
-			var match = true;
+			var match = Kleene.TRUE;
 			for (var cons : lit.constraints) {
 				Concept cc;
 				try {
@@ -485,12 +622,16 @@ public final class Evaluator {
 				} catch (OpenOddException e) {
 					return DerivedLiteral.NONE;
 				}
-				if (!expression(ctx, cc, cons.expr())) {
-					match = false;
+				var v = expression(ctx, cc, cons.expr());
+				if (v == Kleene.FALSE) {
+					match = Kleene.FALSE;
 					break;
 				}
+				if (v == Kleene.UNKNOWN) {
+					match = Kleene.UNKNOWN;
+				}
 			}
-			if (match) {
+			if (match == Kleene.TRUE) {
 				return new DerivedLiteral(lit.name, true);
 			}
 		}
@@ -498,7 +639,7 @@ public final class Evaluator {
 	}
 
 	/** Evaluates UpperBound and LowerBound expressions. */
-	private boolean bound(EvalCtx ctx, Concept c, BoundExpr ex) {
+	private Kleene bound(EvalCtx ctx, Concept c, BoundExpr ex) {
 		if (c.kind == ConceptKind.CATEGORICAL) {
 			return boundCategorical(ctx, c, ex);
 		}
@@ -506,7 +647,7 @@ public final class Evaluator {
 		try {
 			tv = term(ctx, ex.term());
 		} catch (MissingFactorException e) {
-			return false;
+			return Kleene.UNKNOWN;
 		}
 		var threshold = tv.value();
 		var termType = tv.unitType();
@@ -523,7 +664,7 @@ public final class Evaluator {
 	}
 
 	/** Evaluates Range expressions "[a .. b]". */
-	private boolean rangeExpr(EvalCtx ctx, Concept c, RangeExpr ex) {
+	private Kleene rangeExpr(EvalCtx ctx, Concept c, RangeExpr ex) {
 		if (c.kind == ConceptKind.CATEGORICAL) {
 			return rangeCategorical(ctx, c, ex);
 		}
@@ -531,13 +672,13 @@ public final class Evaluator {
 		try {
 			loTv = term(ctx, ex.min());
 		} catch (MissingFactorException e) {
-			return false;
+			return Kleene.UNKNOWN;
 		}
 		TermValue hiTv;
 		try {
 			hiTv = term(ctx, ex.max());
 		} catch (MissingFactorException e) {
-			return false;
+			return Kleene.UNKNOWN;
 		}
 		var lo = loTv.value();
 		var hi = hiTv.value();
@@ -602,20 +743,20 @@ public final class Evaluator {
 	}
 
 	/** Compares a record value against a threshold. */
-	private boolean compareNumber(Concept c, Value v, CmpOp op, double threshold) {
+	private Kleene compareNumber(Concept c, Value v, CmpOp op, double threshold) {
 		return switch (v.kind()) {
-			case NUMBER -> compare(valueInConceptBase(c, v), op, threshold);
+			case NUMBER -> Kleene.of(compare(valueInConceptBase(c, v), op, threshold));
 			case RANGE -> {
 				var conv = convertedRange(c, v);
-				yield compareInterval(op, conv.min(), conv.max(), threshold);
+				yield Kleene.of(compareInterval(op, conv.min(), conv.max(), threshold));
 			}
-			case LIST -> anyOf(v, item -> {
+			case LIST -> Kleene.of(anyOf(v, item -> {
 				if (item.kind() == ValueKind.NUMBER) {
 					return compare(valueInConceptBase(c, item), op, threshold);
 				}
 				return false;
-			});
-			case MISSING -> false;
+			}));
+			case MISSING -> Kleene.UNKNOWN;
 			default -> throw new OpenOddException(
 					"concept \"%s\": bound comparison needs a numeric value, got %s".formatted(c.id, v.kind()));
 		};
@@ -627,24 +768,24 @@ public final class Evaluator {
 	 * intersection with the condition interval and certainty for
 	 * containment.
 	 */
-	private boolean compareRange(Concept c, Value v, double lo, double hi) {
+	private Kleene compareRange(Concept c, Value v, double lo, double hi) {
 		return switch (v.kind()) {
-			case NUMBER -> inInterval(valueInConceptBase(c, v), lo, hi);
+			case NUMBER -> Kleene.of(inInterval(valueInConceptBase(c, v), lo, hi));
 			case RANGE -> {
 				var conv = convertedRange(c, v);
 				if (opts.uncertainty() == UncertaintyMode.CERTAINTY) {
-					yield conv.min() >= lo && conv.max() <= hi;
+					yield Kleene.of(conv.min() >= lo && conv.max() <= hi);
 				}
-				yield conv.min() <= hi && conv.max() >= lo;
+				yield Kleene.of(conv.min() <= hi && conv.max() >= lo);
 			}
-			case LIST -> anyOf(v, item -> {
+			case LIST -> Kleene.of(anyOf(v, item -> {
 				if (item.kind() == ValueKind.NUMBER) {
 					var x = valueInConceptBase(c, item);
 					return x >= lo && x <= hi;
 				}
 				return false;
-			});
-			case MISSING -> false;
+			}));
+			case MISSING -> Kleene.UNKNOWN;
 			default -> throw new OpenOddException(
 					"concept \"%s\": range comparison needs a numeric value, got %s".formatted(c.id, v.kind()));
 		};
@@ -857,7 +998,7 @@ public final class Evaluator {
 	 * Evaluates a bound over orderable categorical literals, for example
 	 * "rain_level: &lt; heavy_rain".
 	 */
-	private boolean boundCategorical(EvalCtx ctx, Concept c, BoundExpr ex) {
+	private Kleene boundCategorical(EvalCtx ctx, Concept c, BoundExpr ex) {
 		var order = literalOrder(c);
 		var threshold = order.get(ex.term().toString());
 		if (threshold == null) {
@@ -866,13 +1007,14 @@ public final class Evaluator {
 		}
 		var idx = categoricalIndex(ctx, c);
 		if (idx == null) {
-			return false;
+			// The record's literal is missing or not orderable.
+			return Kleene.UNKNOWN;
 		}
-		return compare(idx, ex.op(), threshold);
+		return Kleene.of(compare(idx, ex.op(), threshold));
 	}
 
 	/** Evaluates a range over orderable categorical literals. */
-	private boolean rangeCategorical(EvalCtx ctx, Concept c, RangeExpr ex) {
+	private Kleene rangeCategorical(EvalCtx ctx, Concept c, RangeExpr ex) {
 		var order = literalOrder(c);
 		var lo = order.get(ex.min().toString());
 		if (lo == null) {
@@ -886,9 +1028,10 @@ public final class Evaluator {
 		}
 		var idx = categoricalIndex(ctx, c);
 		if (idx == null) {
-			return false;
+			// The record's literal is missing or not orderable.
+			return Kleene.UNKNOWN;
 		}
-		return idx >= lo && idx <= hi;
+		return Kleene.of(idx >= lo && idx <= hi);
 	}
 
 	/**
@@ -1006,17 +1149,20 @@ public final class Evaluator {
 	}
 
 	/** Evaluates CategoricalList expressions. */
-	private boolean list(EvalCtx ctx, Concept c, ListExpr ex) {
+	private Kleene list(EvalCtx ctx, Concept c, ListExpr ex) {
 		var items = expandListItems(ctx, ex.items());
 		var v = recordValue(ctx, c);
 		return switch (v.kind()) {
-			case CATEGORICAL -> contains(items, v.str());
-			case BOOL -> contains(items, formatBool(v.bool()));
+			case CATEGORICAL -> Kleene.of(contains(items, v.str()));
+			case BOOL -> Kleene.of(contains(items, formatBool(v.bool())));
 			case NUMBER -> {
 				var lit = deriveLiteral(ctx, c);
-				yield lit.found() && contains(items, lit.name());
+				if (!lit.found()) {
+					yield Kleene.UNKNOWN;
+				}
+				yield Kleene.of(contains(items, lit.name()));
 			}
-			case LIST -> anyOf(v, item -> switch (item.kind()) {
+			case LIST -> Kleene.of(anyOf(v, item -> switch (item.kind()) {
 				case CATEGORICAL -> contains(items, item.str());
 				case BOOL -> contains(items, formatBool(item.bool()));
 				case NUMBER -> {
@@ -1024,13 +1170,16 @@ public final class Evaluator {
 					yield lit.found() && contains(items, lit.name());
 				}
 				default -> false;
-			});
+			}));
 			case MISSING -> {
+				// The record may carry values for the concepts defining
+				// the literals; derive the literal from those constraints.
 				var lit = deriveLiteral(ctx, c);
 				if (lit.found() && contains(items, lit.name())) {
-					yield true;
+					yield Kleene.TRUE;
 				}
-				yield contains(items, "unknown");
+				// A list accepts missing values through an "unknown" item.
+				yield contains(items, "unknown") ? Kleene.TRUE : Kleene.UNKNOWN;
 			}
 			default -> throw new OpenOddException(
 					"concept \"%s\": list comparison needs a categorical value, got %s".formatted(c.id, v.kind()));

@@ -29,9 +29,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Guards the three example ODDs in testdata/sample_odds. Each file gets
- * its own test that verifies the parsed structure in detail and then
- * exercises the evaluation semantics the file demonstrates.
+ * Guards the example ODDs in testdata/sample_odds. Each file gets its
+ * own test that verifies the parsed structure in detail and then
+ * exercises the evaluation semantics the file demonstrates; the
+ * delivery sample is covered by MissingValueVerdictTest.
  */
 class SampleOddsTest {
 
