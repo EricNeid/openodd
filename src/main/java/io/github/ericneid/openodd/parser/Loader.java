@@ -33,6 +33,8 @@ public final class Loader {
 	/**
 	 * Creates a loader reading through the given resolver. A
 	 * {@code null} resolver defaults to the operating system filesystem.
+	 *
+	 * @param resolver the resolver reading the file contents
 	 */
 	public Loader(FileResolver resolver) {
 		this.resolver = resolver == null ? new OsResolver() : resolver;
@@ -41,6 +43,9 @@ public final class Loader {
 	/**
 	 * Loads the named file through the operating system filesystem,
 	 * following all IMPORT statements.
+	 *
+	 * @param name the file name of the specification
+	 * @return the merged model
 	 */
 	public static Model loadFile(String name) {
 		return new Loader(null).load(name);
@@ -49,6 +54,9 @@ public final class Loader {
 	/**
 	 * Loads multiple files through the operating system filesystem into
 	 * a single model, following all IMPORT statements.
+	 *
+	 * @param paths the file names of the specifications
+	 * @return the merged model
 	 */
 	public static Model loadFiles(String... paths) {
 		var l = new Loader(null);
@@ -63,6 +71,9 @@ public final class Loader {
 	 * Relative import paths are resolved against the directory of the
 	 * importing file. The returned model is complete once every
 	 * top-level load call has returned; use {@link #model()} afterwards.
+	 *
+	 * @param name the file name to load
+	 * @return the merged model
 	 */
 	public Model load(String name) {
 		loadFile(name, "");
@@ -76,6 +87,8 @@ public final class Loader {
 	 * roots unless another module references them, directly or through a
 	 * label (Section 6.4.4.1 of the standard). Recomputes these flags from
 	 * scratch and may be called at any time, also between load calls.
+	 *
+	 * @return the merged model
 	 */
 	public Model model() {
 		// Modules referenced by other modules, directly or through
@@ -101,7 +114,11 @@ public final class Loader {
 		return model;
 	}
 
-	/** The concept index of the merged model; available after loading. */
+	/**
+	 * The concept index of the merged model; available after loading.
+	 *
+	 * @return the concept index
+	 */
 	public ConceptIndex index() {
 		return index;
 	}

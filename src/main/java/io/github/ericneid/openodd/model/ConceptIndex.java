@@ -30,7 +30,11 @@ public final class ConceptIndex {
 	/** Union of taxonomy and expanded concepts. */
 	private final Map<String, Concept> all = new TreeMap<>();
 
-	/** Builds a resolution index over the taxonomy, expanding type references. */
+	/**
+	 * Builds a resolution index over the taxonomy, expanding type references.
+	 *
+	 * @param taxonomy the taxonomy to index
+	 */
 	public ConceptIndex(Taxonomy taxonomy) {
 		this.taxonomy = taxonomy;
 		all.putAll(taxonomy.concepts);
@@ -130,7 +134,12 @@ public final class ConceptIndex {
 		return prefix.isEmpty() ? id : prefix + "." + id;
 	}
 
-	/** Returns the concept with the exact ID, including synthesized expansions. */
+	/**
+	 * Returns the concept with the exact ID, including synthesized expansions.
+	 *
+	 * @param id the concept ID
+	 * @return the concept, or {@code null} when absent
+	 */
 	public Concept concept(String id) {
 		var c = expanded.get(id);
 		if (c != null) {
@@ -168,6 +177,9 @@ public final class ConceptIndex {
 	 *   <li>unique concept whose ID ends in ".&lt;reference&gt;",</li>
 	 *   <li>otherwise an error naming the candidates if ambiguous.</li>
 	 * </ol>
+	 *
+	 * @param ref the concept reference
+	 * @return the resolved concept
 	 */
 	public Concept resolve(String ref) {
 		ref = ref.trim();
@@ -218,6 +230,9 @@ public final class ConceptIndex {
 	 * are frequently written in upper case while taxonomy IDs are lower
 	 * case; the lookup therefore falls back to a case-insensitive match
 	 * on the last ID segment.
+	 *
+	 * @param name the column name
+	 * @return the concept of the column
 	 */
 	public Concept resolveColumn(String name) {
 		name = name.trim();
@@ -267,6 +282,9 @@ public final class ConceptIndex {
 	 * Canonicalizes the keys of a record map so that evaluation can look
 	 * up values by canonical concept ID. Keys that cannot be resolved are
 	 * kept verbatim.
+	 *
+	 * @param values the record values keyed by arbitrary references
+	 * @return the values keyed by canonical concept IDs
 	 */
 	public Map<String, Value> normalizeRecordKeys(Map<String, Value> values) {
 		var out = new LinkedHashMap<String, Value>(values.size());
@@ -288,6 +306,10 @@ public final class ConceptIndex {
 	 * Resolves the record value for a concept; handles canonical keys,
 	 * parameters (with and without "$") and dotted paths into record
 	 * values.
+	 *
+	 * @param c   the concept to look up
+	 * @param rec the record carrying the values
+	 * @return the value and whether it was present
 	 */
 	public RecordHit valueFor(Concept c, Record rec) {
 		// Direct canonical hit.
@@ -324,7 +346,12 @@ public final class ConceptIndex {
 		return new RecordHit(Value.missing(), false);
 	}
 
-	/** Result of a record lookup: the value and whether it was present. */
+	/**
+	 * Result of a record lookup: the value and whether it was present.
+	 *
+	 * @param value  the looked-up value, missing when absent
+	 * @param present whether the record carried a value
+	 */
 	public record RecordHit(Value value, boolean present) {
 	}
 
@@ -332,6 +359,9 @@ public final class ConceptIndex {
 	 * Returns the lookup keys for a concept ID: the ID itself plus the
 	 * spelling with, respectively without, a "$" marker on the last
 	 * segment.
+	 *
+	 * @param id the concept ID
+	 * @return the lookup key variants
 	 */
 	public static List<String> recordKeyVariants(String id) {
 		var i = id.lastIndexOf('.');

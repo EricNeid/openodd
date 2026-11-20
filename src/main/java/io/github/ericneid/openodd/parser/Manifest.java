@@ -17,22 +17,29 @@ import java.util.Map;
  */
 public final class Manifest {
 
-	/** One row of a manifest file. */
+	/**
+	 * One row of a manifest file.
+	 *
+	 * @param fieldId    uniquely identifies the field within the manifest
+	 * @param fileName   the data file, relative to the manifest location
+	 * @param type       "taxonomy", "cod" or "od"
+	 * @param column     the column name in the data file
+	 * @param taxonomyId the taxonomy concept represented by the column
+	 * @param unit       the unit of numeric values
+	 * @param comment    a free-form description
+	 */
 	public record Entry(
-			/** Uniquely identifies the field within the manifest. */
 			String fieldId,
-			/** The data file, relative to the manifest location. */
 			String fileName,
-			/** "taxonomy", "cod" or "od". */
 			String type,
-			/** The column name in the data file. */
 			String column,
-			/** The taxonomy concept represented by the column. */
 			String taxonomyId,
-			/** The unit of numeric values. */
 			String unit,
-			/** A free-form description. */
 			String comment) {
+	}
+
+	/** Creates an empty manifest. */
+	public Manifest() {
 	}
 
 	/** The manifest entries in file order. */
@@ -42,6 +49,9 @@ public final class Manifest {
 	 * Parses a manifest file in CSV form. Requires the columns FIELD_ID,
 	 * FILE_NAME, TYPE, COLUMN, TAXONOMY_ID, UNIT and COMMENT in that
 	 * order.
+	 *
+	 * @param reader the source of the CSV text
+	 * @return the parsed manifest
 	 */
 	public static Manifest parseCsv(Reader reader) {
 		var rows = Csv.readAll(reader);
@@ -95,7 +105,11 @@ public final class Manifest {
 		return true;
 	}
 
-	/** Lists the taxonomy files referenced by the manifest. */
+	/**
+	 * Lists the taxonomy files referenced by the manifest.
+	 *
+	 * @return the referenced file names
+	 */
 	public List<String> taxonomyFiles() {
 		var files = new ArrayList<String>();
 		for (var e : entries) {
@@ -106,7 +120,11 @@ public final class Manifest {
 		return files;
 	}
 
-	/** Lists the COD/OD data files referenced by the manifest. */
+	/**
+	 * Lists the COD/OD data files referenced by the manifest.
+	 *
+	 * @return the referenced file names, without duplicates
+	 */
 	public List<String> dataFiles() {
 		var files = new ArrayList<String>();
 		var seen = new LinkedHashSet<String>();
@@ -137,6 +155,11 @@ public final class Manifest {
 	 * are resolved against dir, the directory of the manifest file. The
 	 * returned table is not yet resolved against a taxonomy; call
 	 * {@link Cod#resolve(ConceptIndex)} afterwards.
+	 *
+	 * @param m        the manifest describing the data files
+	 * @param resolver the resolver reading the file contents, null for the filesystem
+	 * @param dir      the base directory of the referenced files
+	 * @return the merged table
 	 */
 	public static Cod loadCodWithManifest(Manifest m, FileResolver resolver, String dir) {
 		if (resolver == null) {

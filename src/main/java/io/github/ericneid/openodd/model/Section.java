@@ -22,6 +22,11 @@ public final class Section {
 	/** Optional key/value metadata. */
 	public Map<String, String> metadata;
 
+	/**
+	 * Creates a section with the given operator.
+	 *
+	 * @param operator the combining operator of the section
+	 */
 	public Section(SectionOperator operator) {
 		this.operator = Objects.requireNonNull(operator);
 	}

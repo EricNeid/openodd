@@ -4,6 +4,8 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
+
 group = "io.github.ericneid"
 version = "0.2.0"
 
@@ -36,6 +38,19 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.javadoc {
+    // Doclint runs by default; treat its warnings as errors so that
+    // incomplete Javadoc breaks the build. The value of the string
+    // option is ignored by javadoc and only placates the option writer.
+    (options as StandardJavadocDocletOptions).addStringOption("Xwerror", "-quiet")
+}
+
+// The build lifecycle does not run javadoc; hook it into check so that
+// CI reports Javadoc problems.
+tasks.check {
+    dependsOn(tasks.javadoc)
 }
 
 signing {

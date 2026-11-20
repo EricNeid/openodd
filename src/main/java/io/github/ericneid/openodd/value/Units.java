@@ -143,6 +143,9 @@ public final class Units {
 	/**
 	 * Registers a new unit type with the given base unit symbol. Throws
 	 * when the ID is empty or already registered.
+	 *
+	 * @param id   the ID of the unit type
+	 * @param base the base unit symbol of the type
 	 */
 	public static void registerUnitType(String id, String base) {
 		if (id == null || id.isEmpty()) {
@@ -157,6 +160,12 @@ public final class Units {
 	 * Registers a unit symbol for a previously registered unit type.
 	 * Throws when the unit type is unknown or the symbol is already
 	 * registered for the type.
+	 *
+	 * @param unitType the ID of the unit type
+	 * @param symbol   the unit symbol to register
+	 * @param name     the display name of the unit
+	 * @param factor   the factor to the base unit
+	 * @param offset   the offset to the base unit
 	 */
 	public static void registerUnit(String unitType, String symbol, String name, double factor, double offset) {
 		if (factor == 0) {
@@ -181,23 +190,46 @@ public final class Units {
 		registerUnit(unitType, u.id(), u.name(), u.factor(), u.offset());
 	}
 
-	/** Returns the IDs of all registered unit types. */
+	/**
+	 * Returns the IDs of all registered unit types.
+	 *
+	 * @return the unit type IDs
+	 */
 	public static List<String> unitTypes() {
 		return new ArrayList<>(new TreeMap<>(TYPES).keySet());
 	}
 
-	/** Reports whether a unit type with the given ID is registered. */
+	/**
+	 * Reports whether a unit type with the given ID is registered.
+	 *
+	 * @param id the unit type ID
+	 * @return whether the unit type is registered
+	 */
 	public static boolean hasUnitType(String id) {
 		return TYPES.containsKey(id);
 	}
 
-	/** Reports whether the unit type knows the unit symbol. */
+	/**
+	 * Reports whether the unit type knows the unit symbol.
+	 *
+	 * @param unitType the ID of the unit type
+	 * @param symbol   the unit symbol
+	 * @return whether the symbol is registered
+	 */
 	public static boolean hasUnit(String unitType, String symbol) {
 		var entry = TYPES.get(unitType);
 		return entry != null && entry.units().containsKey(symbol);
 	}
 
-	/** Converts a numeric value between two units of the same unit type. */
+	/**
+	 * Converts a numeric value between two units of the same unit type.
+	 *
+	 * @param unitType the ID of the unit type
+	 * @param from     the symbol of the source unit
+	 * @param to       the symbol of the target unit
+	 * @param v        the value in the source unit
+	 * @return the value in the target unit
+	 */
 	public static double convertUnit(String unitType, String from, String to, double v) {
 		if (from.equals(to)) {
 			return v;
@@ -225,6 +257,9 @@ public final class Units {
 	/**
 	 * Returns the registered unit type for a unit symbol, or {@code null}.
 	 * Used to interpret column markers such as ";count" or ";mm/hr".
+	 *
+	 * @param symbol the unit symbol
+	 * @return the unit type ID, or {@code null} when unregistered
 	 */
 	public static String unitTypeOfUnit(String symbol) {
 		if (symbol == null || symbol.isEmpty()) {
@@ -238,7 +273,13 @@ public final class Units {
 		return null;
 	}
 
-	/** Reports whether the symbol is a registered unit of the given unit type. */
+	/**
+	 * Reports whether the symbol is a registered unit of the given unit type.
+	 *
+	 * @param unitType the ID of the unit type
+	 * @param symbol   the unit symbol
+	 * @return whether the symbol is registered for the type
+	 */
 	public static boolean isKnownUnitSymbol(String unitType, String symbol) {
 		if (symbol == null || symbol.isEmpty()) {
 			return true;
@@ -247,13 +288,23 @@ public final class Units {
 		return entry != null && entry.units().containsKey(symbol);
 	}
 
-	/** Reports whether any unit is registered for the type. */
+	/**
+	 * Reports whether any unit is registered for the type.
+	 *
+	 * @param id the unit type ID
+	 * @return whether the type has units
+	 */
 	public static boolean unitTypeHasUnits(String id) {
 		var entry = TYPES.get(id);
 		return entry != null && !entry.units().isEmpty();
 	}
 
-	/** Returns the base unit symbol of a unit type, or {@code null} when unknown. */
+	/**
+	 * Returns the base unit symbol of a unit type, or {@code null} when unknown.
+	 *
+	 * @param unitType the ID of the unit type
+	 * @return the base unit symbol, or {@code null} when unknown
+	 */
 	public static String baseUnitOf(String unitType) {
 		var entry = TYPES.get(unitType);
 		return entry == null ? null : entry.type().base();

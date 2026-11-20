@@ -23,7 +23,11 @@ public enum CmpOp {
 		this.symbol = symbol;
 	}
 
-	/** The operator symbol of the YAML notation, "" for equality. */
+	/**
+	 * The operator symbol of the YAML notation, "" for equality.
+	 *
+	 * @return the operator symbol
+	 */
 	public String symbol() {
 		return symbol;
 	}

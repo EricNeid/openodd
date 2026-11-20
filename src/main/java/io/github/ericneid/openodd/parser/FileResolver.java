@@ -11,6 +11,11 @@ package io.github.ericneid.openodd.parser;
  */
 public interface FileResolver {
 
-	/** Reads the file content as UTF-8 text. */
+	/**
+	 * Reads the file content as UTF-8 text.
+	 *
+	 * @param name the file name to resolve
+	 * @return the content of the file
+	 */
 	String readFile(String name);
 }

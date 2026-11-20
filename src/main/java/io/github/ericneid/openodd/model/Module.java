@@ -35,6 +35,12 @@ public final class Module {
 	/** The single optional EXCLUDE section. */
 	public Section exclude;
 
+	/**
+	 * Creates a module with the given ID and kind.
+	 *
+	 * @param id   the module ID
+	 * @param kind "ODD", "TOD" or "Standard"
+	 */
 	public Module(String id, String kind) {
 		this.id = id;
 		this.kind = kind;

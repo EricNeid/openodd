@@ -14,6 +14,11 @@ public final class MapResolver implements FileResolver {
 
 	private final Map<String, String> files;
 
+	/**
+	 * Creates a resolver over the given files.
+	 *
+	 * @param files the file contents keyed by file name
+	 */
 	public MapResolver(Map<String, String> files) {
 		this.files = files;
 	}

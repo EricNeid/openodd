@@ -15,7 +15,16 @@ public final class Taxonomy {
 	/** The top-level concepts in declaration order. */
 	public final Map<String, Concept> roots = new LinkedHashMap<>();
 
-	/** Returns the concept with the given exact ID, or {@code null}. */
+	/** Creates an empty taxonomy. */
+	public Taxonomy() {
+	}
+
+	/**
+	 * Returns the concept with the given exact ID, or {@code null}.
+	 *
+	 * @param id the concept ID
+	 * @return the concept, or {@code null} when absent
+	 */
 	public Concept concept(String id) {
 		return concepts.get(id);
 	}

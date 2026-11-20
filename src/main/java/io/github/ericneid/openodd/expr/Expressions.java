@@ -39,7 +39,12 @@ public final class Expressions {
 		return CmpOp.NONE;
 	}
 
-	/** Parses a condition value from its string form. */
+	/**
+	 * Parses a condition value from its string form.
+	 *
+	 * @param input the condition value text
+	 * @return the parsed expression
+	 */
 	public static Expression parse(String input) {
 		var s = input.trim();
 		if (s.isEmpty()) {
@@ -115,7 +120,12 @@ public final class Expressions {
 		return new ListExpr(Texts.splitListItems(inner));
 	}
 
-	/** Splits on the first ".."; throws when absent. */
+	/**
+	 * Splits on the first ".."; throws when absent.
+	 *
+	 * @param inner the range text
+	 * @return the bounds before and after the separator
+	 */
 	public static String[] splitOnDoubleDot(String inner) {
 		var idx = inner.indexOf("..");
 		if (idx < 0) {

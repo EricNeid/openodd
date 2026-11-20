@@ -18,6 +18,15 @@ public final class Column {
 	/** Marks the SPATIAL_EXTENT column. */
 	public final boolean spatial;
 
+	/**
+	 * Creates a column from a parsed header.
+	 *
+	 * @param header   the column title as written, including any ";marker" suffix
+	 * @param name     the concept name part of the header
+	 * @param unit     the unit symbol, null for none
+	 * @param temporal whether the column marks the TEMPORAL_EXTENT
+	 * @param spatial  whether the column marks the SPATIAL_EXTENT
+	 */
 	public Column(String header, String name, String unit, boolean temporal, boolean spatial) {
 		this.header = header;
 		this.name = name;

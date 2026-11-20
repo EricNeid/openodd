@@ -15,11 +15,17 @@ public record EvalOptions(UncertaintyMode uncertainty) {
 	/** Default options: possibility semantics. */
 	public static final EvalOptions DEFAULT = new EvalOptions(UncertaintyMode.POSSIBILITY);
 
+	/** Normalizes a null uncertainty mode to possibility. */
 	public EvalOptions {
 		uncertainty = Objects.requireNonNullElse(uncertainty, UncertaintyMode.POSSIBILITY);
 	}
 
-	/** Creates options with the given uncertainty mode. */
+	/**
+	 * Creates options with the given uncertainty mode.
+	 *
+	 * @param uncertainty the uncertainty mode
+	 * @return the options
+	 */
 	public static EvalOptions of(UncertaintyMode uncertainty) {
 		return new EvalOptions(uncertainty);
 	}

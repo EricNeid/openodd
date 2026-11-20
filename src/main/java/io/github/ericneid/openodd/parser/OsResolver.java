@@ -13,6 +13,10 @@ import java.nio.file.Path;
  */
 public final class OsResolver implements FileResolver {
 
+	/** Creates a filesystem resolver. */
+	public OsResolver() {
+	}
+
 	@Override
 	public String readFile(String name) {
 		try {

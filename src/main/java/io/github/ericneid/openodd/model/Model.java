@@ -26,7 +26,16 @@ public final class Model {
 	/** The files that contributed to the model, in load order. */
 	public final List<String> imports = new ArrayList<>();
 
-	/** Returns the module with the given ID, or {@code null}. */
+	/** Creates an empty model. */
+	public Model() {
+	}
+
+	/**
+	 * Returns the module with the given ID, or {@code null}.
+	 *
+	 * @param id the module ID
+	 * @return the module, or {@code null} when absent
+	 */
 	public Module module(String id) {
 		return modules.get(id);
 	}
@@ -37,17 +46,27 @@ public final class Model {
 	 * ODD, TOD and MODULES elements; imports have already been merged
 	 * into the model and are therefore not reproduced. The output parses
 	 * back into an equivalent model.
+	 *
+	 * @return the rendered YAML document
 	 */
 	public byte[] writeYAML() {
 		return YamlWriter.writeYAML(this);
 	}
 
-	/** Renders the model in YAML form into w. */
+	/**
+	 * Renders the model in YAML form into w.
+	 *
+	 * @param w the target of the rendered document
+	 */
 	public void writeYAMLTo(Appendable w) {
 		YamlWriter.writeYAMLTo(this, w);
 	}
 
-	/** Returns the root modules in declaration order. */
+	/**
+	 * Returns the root modules in declaration order.
+	 *
+	 * @return the root modules
+	 */
 	public List<Module> rootModules() {
 		var mods = new ArrayList<Module>(rootIds.size());
 		for (var id : rootIds) {

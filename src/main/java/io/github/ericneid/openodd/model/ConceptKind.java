@@ -21,7 +21,11 @@ public enum ConceptKind {
 		this.label = label;
 	}
 
-	/** The human readable name used in error messages. */
+	/**
+	 * The human readable name used in error messages.
+	 *
+	 * @return the human readable name
+	 */
 	public String label() {
 		return label;
 	}

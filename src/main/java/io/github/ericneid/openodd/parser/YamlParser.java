@@ -45,7 +45,12 @@ public final class YamlParser {
 	private YamlParser() {
 	}
 
-	/** Parses a single ASAM OpenODD YAML document. */
+	/**
+	 * Parses a single ASAM OpenODD YAML document.
+	 *
+	 * @param data the YAML text
+	 * @return the parsed document
+	 */
 	public static Document parse(String data) {
 		var root = compose(data);
 		if (root == null) {

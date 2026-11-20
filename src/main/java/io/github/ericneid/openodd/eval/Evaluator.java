@@ -108,7 +108,12 @@ public final class Evaluator {
 	/** Caches the literal order of orderable categoricals. */
 	private final Map<String, Map<String, Integer>> orders = new ConcurrentHashMap<>();
 
-	/** Builds an evaluator over the model. */
+	/**
+	 * Builds an evaluator over the model.
+	 *
+	 * @param model   the model with the ODD to evaluate against
+	 * @param options the evaluation options, null for the defaults
+	 */
 	public Evaluator(Model model, EvalOptions options) {
 		this.model = Objects.requireNonNull(model);
 		this.idx = new ConceptIndex(model.taxonomy);
@@ -121,6 +126,10 @@ public final class Evaluator {
 	 * unambiguous short references work as keys. An UNKNOWN verdict
 	 * collapses to false; use {@link #classify(Record, String)} to keep
 	 * the three-valued verdict.
+	 *
+	 * @param rec      the record to evaluate
+	 * @param moduleId the ID of the module to evaluate
+	 * @return whether the record lies inside the module
 	 */
 	public boolean evaluate(Record rec, String moduleId) {
 		return classify(rec, moduleId).toBoolean();
@@ -130,6 +139,10 @@ public final class Evaluator {
 	 * Classifies one module for a record. Record keys are canonicalized
 	 * against the taxonomy first, so both full concept IDs and
 	 * unambiguous short references work as keys.
+	 *
+	 * @param rec      the record to classify
+	 * @param moduleId the ID of the module to classify against
+	 * @return the verdict of the record for the module
 	 */
 	public OddVerdict classify(Record rec, String moduleId) {
 		var mod = model.modules.get(moduleId);
@@ -144,6 +157,9 @@ public final class Evaluator {
 	 * module IDs to their truth values, with UNKNOWN collapsed to false;
 	 * use {@link #classifyRoots(Record)} to keep the three-valued
 	 * verdicts.
+	 *
+	 * @param rec the record to evaluate
+	 * @return the truth values of the root modules
 	 */
 	public Map<String, Boolean> evaluateRoots(Record rec) {
 		var out = new LinkedHashMap<String, Boolean>();
@@ -156,6 +172,9 @@ public final class Evaluator {
 	/**
 	 * Classifies every root module for a record. The result maps root
 	 * module IDs to their three-valued verdicts.
+	 *
+	 * @param rec the record to classify
+	 * @return the verdicts of the root modules
 	 */
 	public Map<String, OddVerdict> classifyRoots(Record rec) {
 		var ctx = newContext(rec);
@@ -182,6 +201,9 @@ public final class Evaluator {
 	 * Reports whether a record lies inside the ODD: all root modules
 	 * evaluate to true. A record with an UNKNOWN verdict is not inside;
 	 * use {@link #classify(Record)} to keep the three-valued verdict.
+	 *
+	 * @param rec the record to check
+	 * @return whether the record lies inside the ODD
 	 */
 	public boolean insideOdd(Record rec) {
 		return classify(rec).toBoolean();
@@ -191,6 +213,9 @@ public final class Evaluator {
 	 * Classifies a record against the whole ODD: INSIDE when every root
 	 * module is true, OUTSIDE when any root module is false, UNKNOWN
 	 * when no root module is false but at least one cannot be judged.
+	 *
+	 * @param rec the record to classify
+	 * @return the verdict of the record for the whole ODD
 	 */
 	public OddVerdict classify(Record rec) {
 		var result = Kleene.TRUE;
@@ -205,6 +230,9 @@ public final class Evaluator {
 	 * is aligned with {@code cod.records}, with UNKNOWN collapsed to
 	 * false; use {@link #classifyCod(Cod)} to keep the three-valued
 	 * verdicts.
+	 *
+	 * @param cod the table with the records to evaluate
+	 * @return the truth values per row and root module
 	 */
 	public List<Map<String, Boolean>> evaluateCod(Cod cod) {
 		var results = new ArrayList<Map<String, Boolean>>(cod.records.size());
@@ -221,6 +249,9 @@ public final class Evaluator {
 	/**
 	 * Classifies all root modules for every record of a table. The
 	 * result is aligned with {@code cod.records}.
+	 *
+	 * @param cod the table with the records to classify
+	 * @return the verdicts per row and root module
 	 */
 	public List<Map<String, OddVerdict>> classifyCod(Cod cod) {
 		var results = new ArrayList<Map<String, OddVerdict>>(cod.records.size());

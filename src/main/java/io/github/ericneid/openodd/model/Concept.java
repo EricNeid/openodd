@@ -52,6 +52,14 @@ public final class Concept {
 	/** Optional free-form description. */
 	public String description = "";
 
+	/**
+	 * Creates a concept with the given ID, name, parameter flag and parent.
+	 *
+	 * @param id        the full dotted path of the concept
+	 * @param name      the leaf segment of the ID
+	 * @param parameter whether the concept is a parameter
+	 * @param parent    the enclosing record, null at the top level
+	 */
 	public Concept(String id, String name, boolean parameter, Concept parent) {
 		this.id = id;
 		this.name = name;
@@ -59,7 +67,12 @@ public final class Concept {
 		this.parent = parent;
 	}
 
-	/** Reports whether the type name is a primitive type of the standard. */
+	/**
+	 * Reports whether the type name is a primitive type of the standard.
+	 *
+	 * @param s the type name
+	 * @return whether the name is a primitive type
+	 */
 	public static boolean isPrimitiveType(String s) {
 		return switch (s) {
 			case PRIM_BOOL, PRIM_INT, PRIM_LONG, PRIM_FLOAT, PRIM_DOUBLE, PRIM_SHAPEFILE -> true;
@@ -67,7 +80,12 @@ public final class Concept {
 		};
 	}
 
-	/** Reports whether the type name is numeric. */
+	/**
+	 * Reports whether the type name is numeric.
+	 *
+	 * @param s the type name
+	 * @return whether the name is numeric
+	 */
 	public static boolean isNumericPrimitive(String s) {
 		return switch (s) {
 			case PRIM_INT, PRIM_LONG, PRIM_FLOAT, PRIM_DOUBLE -> true;
@@ -75,7 +93,11 @@ public final class Concept {
 		};
 	}
 
-	/** Returns the literal names in declaration order. */
+	/**
+	 * Returns the literal names in declaration order.
+	 *
+	 * @return the literal names
+	 */
 	public List<String> leafNames() {
 		var names = new ArrayList<String>(literals.size());
 		for (var l : literals) {
@@ -84,7 +106,12 @@ public final class Concept {
 		return names;
 	}
 
-	/** Returns the literal with the given name, or {@code null}. */
+	/**
+	 * Returns the literal with the given name, or {@code null}.
+	 *
+	 * @param name the literal name
+	 * @return the literal, or {@code null} when absent
+	 */
 	public Literal literal(String name) {
 		for (var l : literals) {
 			if (l.name.equals(name)) {
@@ -94,7 +121,11 @@ public final class Concept {
 		return null;
 	}
 
-	/** Returns a human readable description for error messages. */
+	/**
+	 * Returns a human readable description for error messages.
+	 *
+	 * @return the description of the concept
+	 */
 	public String describe() {
 		return switch (kind) {
 			case ATTRIBUTE -> unitType.isEmpty()

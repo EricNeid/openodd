@@ -8,10 +8,21 @@ package io.github.ericneid.openodd;
  */
 public class OpenOddException extends RuntimeException {
 
+	/**
+	 * Creates an exception with a message.
+	 *
+	 * @param message the error message
+	 */
 	public OpenOddException(String message) {
 		super(message);
 	}
 
+	/**
+	 * Creates an exception with a message and cause.
+	 *
+	 * @param message the error message
+	 * @param cause   the cause of the error
+	 */
 	public OpenOddException(String message, Throwable cause) {
 		super(message, cause);
 	}

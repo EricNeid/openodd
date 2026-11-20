@@ -17,6 +17,9 @@ public final class Texts {
 	 * Renders a number the way the standard writes it: integral values
 	 * without a decimal point, everything else with the shortest exact
 	 * representation, mirroring Go's {@code strconv.FormatFloat(f, 'g', -1, 64)}.
+	 *
+	 * @param f the number to render
+	 * @return the rendered number
 	 */
 	public static String formatNumber(double f) {
 		if (f == (long) f && f > -1e15 && f < 1e15) {
@@ -100,7 +103,12 @@ public final class Texts {
 		return sb.toString();
 	}
 
-	/** Prefixes a unit symbol with a separating space. */
+	/**
+	 * Prefixes a unit symbol with a separating space.
+	 *
+	 * @param unit the unit symbol, "" for none
+	 * @return the suffixed unit, "" for none
+	 */
 	public static String suffixUnit(String unit) {
 		if (unit == null || unit.isEmpty()) {
 			return "";
@@ -108,7 +116,12 @@ public final class Texts {
 		return " " + unit;
 	}
 
-	/** Reports whether s is one of the accepted spellings of the missing-value keyword. */
+	/**
+	 * Reports whether s is one of the accepted spellings of the missing-value keyword.
+	 *
+	 * @param s the text to check
+	 * @return whether the text spells the missing-value keyword
+	 */
 	public static boolean isUnknownKeyword(String s) {
 		if (s == null) {
 			return true;
@@ -122,6 +135,9 @@ public final class Texts {
 	/**
 	 * Splits a string into a leading number and a trailing unit. Returns
 	 * {@code null} when the string does not start with a number.
+	 *
+	 * @param s the text to split
+	 * @return the number and unit, or {@code null}
 	 */
 	public static NumberUnit splitNumberUnit(String s) {
 		s = s.trim();
@@ -170,13 +186,21 @@ public final class Texts {
 		return new NumberUnit(f, unit);
 	}
 
-	/** Result of {@link #splitNumberUnit}. */
+	/**
+	 * Result of {@link #splitNumberUnit}.
+	 *
+	 * @param num  the numeric value
+	 * @param unit the unit symbol, "" when absent
+	 */
 	public record NumberUnit(double num, String unit) {
 	}
 
 	/**
 	 * Splits a comma separated list, tolerating quoted items; empty items
 	 * are dropped.
+	 *
+	 * @param s the list text
+	 * @return the list items
 	 */
 	public static List<String> splitListItems(String s) {
 		if (s == null || s.isEmpty()) {

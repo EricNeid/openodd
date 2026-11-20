@@ -27,7 +27,11 @@ public enum ValueKind {
 		this.label = label;
 	}
 
-	/** The name used in error messages. */
+	/**
+	 * The name used in error messages.
+	 *
+	 * @return the human readable name
+	 */
 	public String label() {
 		return label;
 	}

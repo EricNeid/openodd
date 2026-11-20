@@ -29,6 +29,10 @@ public final class Cod {
 	/** The records of the table in row order. */
 	public final List<Record> records = new ArrayList<>();
 
+	/** Creates an empty table. */
+	public Cod() {
+	}
+
 	/** The manifest-declared interpretation of one column. */
 	record ColumnMapping(String taxonomyId, String unit) {
 	}
@@ -39,6 +43,9 @@ public final class Cod {
 	 * "NAME;type", including the TEMPORAL_EXTENT and SPATIAL_EXTENT
 	 * columns. Concept names are matched case-insensitively when the
 	 * table is resolved against a taxonomy.
+	 *
+	 * @param reader the source of the CSV text
+	 * @return the parsed table
 	 */
 	public static Cod parseCsv(Reader reader) {
 		return parseCsv(reader, Map.of());
@@ -172,7 +179,9 @@ public final class Cod {
 	 * Canonicalizes the concept keys of all records against the
 	 * taxonomy. Assigns unit types to unitless numeric values from the
 	 * concepts and flattens record-structured cells under their concept
-	 * paths. Returns the first resolution error encountered.
+	 * paths. The first resolution error encountered is thrown.
+	 *
+	 * @param idx the concept index to resolve against
 	 */
 	public void resolve(ConceptIndex idx) {
 		for (var i = 0; i < records.size(); i++) {
@@ -200,6 +209,9 @@ public final class Cod {
 	/**
 	 * Parses COD/OD data in the YAML form of Section 10.3: a list of
 	 * records whose keys are "NAME;marker" column headers.
+	 *
+	 * @param data the YAML text
+	 * @return the parsed records
 	 */
 	public static List<Record> parseYaml(String data) {
 		return YamlParser.parse(data).codAndOd();
@@ -209,6 +221,9 @@ public final class Cod {
 	 * Canonicalizes concept keys of YAML-parsed records against the
 	 * taxonomy, in the same way {@link #resolve(ConceptIndex)} does for
 	 * CSV tables.
+	 *
+	 * @param records the records to canonicalize
+	 * @param idx     the concept index to resolve against
 	 */
 	public static void resolveRecords(List<Record> records, ConceptIndex idx) {
 		for (var i = 0; i < records.size(); i++) {
@@ -237,6 +252,8 @@ public final class Cod {
 	 * Merges another COD into this one by taking the union of columns
 	 * and appending the records (Section 8.3.2.2). Both tables must be
 	 * resolved against the same taxonomy.
+	 *
+	 * @param other the table to merge into this one
 	 */
 	public void merge(Cod other) {
 		var known = new java.util.HashSet<String>();
@@ -252,7 +269,12 @@ public final class Cod {
 		records.addAll(other.records);
 	}
 
-	/** Reads COD/OD data in CSV form from a string. */
+	/**
+	 * Reads COD/OD data in CSV form from a string.
+	 *
+	 * @param csv the CSV text
+	 * @return the parsed table
+	 */
 	public static Cod parseCsvText(String csv) {
 		return parseCsv(new StringReader(csv));
 	}

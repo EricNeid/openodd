@@ -42,7 +42,11 @@ public final class Validator {
 		this.model = model;
 	}
 
-	/** Validates the model; see the class documentation. */
+	/**
+	 * Validates the model; see the class documentation.
+	 *
+	 * @param m the model to validate
+	 */
 	public static void validate(Model m) {
 		var v = new Validator(m);
 		v.taxonomy();

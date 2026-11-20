@@ -29,6 +29,11 @@ public final class Values {
 	 * or "91%". Booleans, the unknown keywords and categorical literals
 	 * are recognized as well. defaultUnit (with its unit type) is applied
 	 * to bare numbers, typically the unit from a table column header.
+	 *
+	 * @param input           the cell or condition text
+	 * @param defaultUnit     the unit applied to bare numbers
+	 * @param defaultUnitType the unit type of the default unit
+	 * @return the parsed value
 	 */
 	public static Value parseScalarValue(String input, String defaultUnit, String defaultUnitType) {
 		var s = input.trim();
@@ -80,6 +85,11 @@ public final class Values {
 	 * categorical literals, uncertainty ranges "[a .. b]", alternative
 	 * lists "[x, y]" or "x;y", JSON record structures and the unknown
 	 * keywords.
+	 *
+	 * @param cell            the cell text
+	 * @param defaultUnit     the unit applied to bare numbers
+	 * @param defaultUnitType the unit type of the default unit
+	 * @return the parsed value
 	 */
 	public static Value parseCellValue(String cell, String defaultUnit, String defaultUnitType) {
 		var c = cell.trim();
@@ -282,6 +292,10 @@ public final class Values {
 	 * Flattens a record value into dst, prefixing each relative field
 	 * path with prefix. Used by table loaders to expose JSON record cells
 	 * under their full concept paths.
+	 *
+	 * @param v      the record value to flatten
+	 * @param prefix the concept path prefix of the record
+	 * @param dst    the destination map receiving the flattened values
 	 */
 	public static void recordFieldValues(Value v, String prefix, Map<String, Value> dst) {
 		for (var e : v.rec().entrySet()) {
@@ -296,6 +310,10 @@ public final class Values {
 	/**
 	 * Refines a parsed value with taxonomy knowledge: numeric values
 	 * without a unit type inherit the unit type of their concept.
+	 *
+	 * @param v the parsed value
+	 * @param c the concept the value belongs to
+	 * @return the refined value
 	 */
 	public static Value withConcept(Value v, Concept c) {
 		return switch (v.kind()) {

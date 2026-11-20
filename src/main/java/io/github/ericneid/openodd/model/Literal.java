@@ -17,6 +17,11 @@ public final class Literal {
 	/** The defining constraints; multiple constraints combine conjunctively. */
 	public final List<Constraint> constraints = new ArrayList<>();
 
+	/**
+	 * Creates a literal with the given name.
+	 *
+	 * @param name the literal name
+	 */
 	public Literal(String name) {
 		this.name = name;
 	}

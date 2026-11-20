@@ -20,6 +20,13 @@ public final class Condition {
 	/** Optional key/value pairs. */
 	public final Map<String, String> metadata;
 
+	/**
+	 * Creates a condition from a reference, an expression and metadata.
+	 *
+	 * @param ref      the referenced concept, module or label
+	 * @param expr     the boolean expression of the condition
+	 * @param metadata optional key/value pairs
+	 */
 	public Condition(String ref, Expression expr, Map<String, String> metadata) {
 		this.ref = ref;
 		this.expr = expr;

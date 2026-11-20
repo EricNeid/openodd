@@ -38,14 +38,24 @@ public final class YamlWriter {
 	private YamlWriter() {
 	}
 
-	/** Renders the model into UTF-8 bytes. */
+	/**
+	 * Renders the model into UTF-8 bytes.
+	 *
+	 * @param m the model to render
+	 * @return the rendered YAML document
+	 */
 	public static byte[] writeYAML(Model m) {
 		var e = new Emitter();
 		e.emitDocument(yamlNode(m));
 		return e.out.toString().getBytes(StandardCharsets.UTF_8);
 	}
 
-	/** Renders the model into an appendable output. */
+	/**
+	 * Renders the model into an appendable output.
+	 *
+	 * @param m the model to render
+	 * @param w the target of the rendered document
+	 */
 	public static void writeYAMLTo(Model m, Appendable w) {
 		var e = new Emitter();
 		e.emitDocument(yamlNode(m));

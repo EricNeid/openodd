@@ -26,11 +26,20 @@ public final class Document {
 	public final List<String> rootIds = new ArrayList<>();
 	/** Labels mapped to the module IDs carrying them. */
 	public final Map<String, List<String>> labels = new LinkedHashMap<>();
-	/** Tabular data declared under the COD and OD elements. */
+	/** Tabular data declared under the COD element. */
 	public final List<Record> cod = new ArrayList<>();
+	/** Tabular data declared under the OD element. */
 	public final List<Record> od = new ArrayList<>();
 
-	/** Concatenation of the COD and OD records. */
+	/** Creates an empty document. */
+	public Document() {
+	}
+
+	/**
+	 * Concatenation of the COD and OD records.
+	 *
+	 * @return the concatenated records
+	 */
 	public List<Record> codAndOd() {
 		var out = new ArrayList<Record>(cod.size() + od.size());
 		out.addAll(cod);
