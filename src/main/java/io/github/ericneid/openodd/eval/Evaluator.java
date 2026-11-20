@@ -858,7 +858,11 @@ public final class Evaluator {
 		return (x > lo || numEqual(x, lo)) && (x < hi || numEqual(x, hi));
 	}
 
-	/** Applies f to the alternatives of an epistemic list value. */
+	/**
+	 * Applies f to the alternatives of an epistemic list value. Under
+	 * possibility the predicate holds when at least one alternative
+	 * satisfies it, under certainty when all of them do.
+	 */
 	private boolean anyOf(Value v, Predicate<Value> f) {
 		for (var item : v.items()) {
 			var ok = f.test(item);
@@ -872,7 +876,7 @@ public final class Evaluator {
 				return true;
 			}
 		}
-		return opts.uncertainty() != UncertaintyMode.CERTAINTY;
+		return opts.uncertainty() == UncertaintyMode.CERTAINTY;
 	}
 
 	/** A term's numeric value together with the unit type it carries. */

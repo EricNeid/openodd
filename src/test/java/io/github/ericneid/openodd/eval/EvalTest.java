@@ -204,6 +204,12 @@ class EvalTest {
                   risky:
                     INCLUDE_AND:
                       type: [truck, bus]
+                  both:
+                    INCLUDE_AND:
+                      type: [car, truck]
+                  cars:
+                    INCLUDE_AND:
+                      type: [car]
                 """);
 		var rangeRec = TestRecords.record("s.speed", "[24 .. 26] m/s");
 		var tests = List.of(
@@ -219,7 +225,11 @@ class EvalTest {
 				new UncertaintyCase("epistemic list hit",
 						TestRecords.record("s.type", "[car, truck]"), "risky", true, false),
 				new UncertaintyCase("epistemic list miss",
-						TestRecords.record("s.type", "car"), "risky", false, false));
+						TestRecords.record("s.type", "car"), "risky", false, false),
+				new UncertaintyCase("epistemic list all satisfying",
+						TestRecords.record("s.type", "[car, truck]"), "both", true, true),
+				new UncertaintyCase("epistemic list none satisfying",
+						TestRecords.record("s.type", "[truck, bus]"), "cars", false, false));
 		for (var tt : tests) {
 			// arrange
 			var poss = newEvaluator(m, EvalOptions.of(UncertaintyMode.POSSIBILITY));

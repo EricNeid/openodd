@@ -3,6 +3,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+* Fixed the evaluation of epistemic list values (`[a, b]`): when no
+  alternative satisfied a condition, the possibility mode wrongly
+  reported true and the certainty mode wrongly reported false when all
+  alternatives satisfied it. `Evaluator.anyOf` now falls through with
+  the verdict implied by its uncertainty mode.
+
 ## 0.2.0 - 2026-11-20
 
 * Added three-valued classification: `OddVerdict` with `Evaluator.classify`,
