@@ -7,7 +7,7 @@ plugins {
 import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 group = "io.github.ericneid"
-version = "0.2.0"
+version = "0.2.1"
 
 // The Java version used to compile and run the build. CI raises this
 // through the toolchainJavaVersion property to test against newer JDKs.

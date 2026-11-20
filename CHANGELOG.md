@@ -3,7 +3,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.2.1 - 2026-11-20
 
 * Fixed the evaluation of epistemic list values (`[a, b]`): when no
   alternative satisfied a condition, the possibility mode wrongly

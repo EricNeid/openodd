@@ -28,7 +28,7 @@ Get library from Maven Central:
 
 ```kotlin
 dependencies {
-    implementation("io.github.ericneid:openodd:0.2.0")
+    implementation("io.github.ericneid:openodd:0.2.1")
 }
 ```
 
@@ -36,7 +36,7 @@ To build from source:
 
 ```sh
 ./gradlew build
-# build/libs/openodd-0.2.0.jar
+# build/libs/openodd-0.2.1.jar
 ```
 
 ## Usage
